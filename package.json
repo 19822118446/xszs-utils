@@ -1,0 +1,52 @@
+{
+  "name": "@xszs/utils",
+  "version": "0.0.3",
+  "packageManager": "pnpm@10.7.0",
+  "description": "一个实用的 TypeScript 工具函数库",
+  "author": "",
+  "license": "ISC",
+  "keywords": [
+    "tools"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "prepublishOnly": "pnpm build",
+    "test": "vitest test --reporter=tree",
+    "test:ui": "vitest --ui",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "docs:dev": "vitepress dev src/vitepress",
+    "docs:build": "vitepress build src/vitepress"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "decimal.js": "^10.6.0"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^6.7.1",
+    "@types/node": "^25.0.2",
+    "@vitest/ui": "^4.0.15",
+    "eslint": "^9.39.2",
+    "typescript": "^5.0.0",
+    "vite": "^7.2.7",
+    "vite-plugin-dts": "^4.5.4",
+    "vitepress": "2.0.0-alpha.15",
+    "vitest": "^4.0.15"
+  }
+}
