@@ -33,8 +33,8 @@
     "test:ui": "vitest --ui",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "docs:dev": "vitepress dev src/vitepress",
-    "docs:build": "vitepress build src/vitepress"
+    "docs:dev": "vitepress dev src/doc",
+    "docs:build": "vitepress build src/doc"
   },
   "publishConfig": {
     "access": "public"
