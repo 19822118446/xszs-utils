@@ -8,6 +8,7 @@
   "keywords": [
     "tools"
   ],
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -21,6 +22,9 @@
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=14"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

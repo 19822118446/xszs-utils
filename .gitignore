@@ -10,8 +10,8 @@ dist
 # VitePress
 .vitepress/cache/
 .vitepress/dist/
-src/vitepress/dist
-src/vitepress/.vitepress/cache/
+src/doc/dist
+src/doc/.vitepress/cache/
 # Node dependencies
 node_modules
 
