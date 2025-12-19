@@ -19,10 +19,12 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     rollupOptions: {
-      external: ['decimal.js'],
+      external: ['decimal.js', 'exceljs', 'file-saver'],
       output: {
         globals: {
           'decimal.js': 'Decimal',
+          'exceljs': 'ExcelJS',
+          'file-saver': 'FileSaver',
         },
       },
     },

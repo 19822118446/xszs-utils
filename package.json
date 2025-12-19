@@ -1,6 +1,6 @@
 {
   "name": "@xszs/utils",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "packageManager": "pnpm@10.7.0",
   "description": "一个实用的 TypeScript 工具函数库",
   "author": "",
@@ -36,10 +36,13 @@
     "access": "public"
   },
   "peerDependencies": {
-    "decimal.js": "^10.6.0"
+    "decimal.js": "^10.6.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.7.1",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^25.0.2",
     "@vitest/ui": "^4.0.15",
     "eslint": "^9.39.2",
