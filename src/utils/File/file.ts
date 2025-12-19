@@ -1,4 +1,8 @@
-export function fileIsWhatMediaType(file: File): 'image' | 'video' | 'audio' | 'other' {
+import ExcelJS from 'exceljs'
+import { saveAs } from 'file-saver'
+
+export type FileMediaType = 'image' | 'video' | 'audio' | 'other'
+export function fileIsWhatMediaType(file: File): FileMediaType {
   const mediaType = file.type
   if (mediaType.startsWith('image/')) {
     return 'image'
@@ -35,7 +39,7 @@ export async function downloadFileByUri(
   } = {
     method: 'GET',
     headers: {},
-    onProgress: () => {},
+    onProgress: () => { },
   },
 ): Promise<void> {
   let blob: Blob
@@ -174,5 +178,58 @@ export async function downloadFileByUri(
   catch (error) {
     URL.revokeObjectURL(url)
     throw new Error(`下载文件失败: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+interface SheetOptions {
+  data: Record<string, any>[]
+  tableHeader: { header: string, key: string }[]
+  sheetName: string
+}
+
+interface ExportOptions {
+  fileName: string
+}
+export type ExportExcelPlugin = 'cellCenter' | 'cellBorder'
+/**
+ * 导出Excel
+ * @param sheetOptions 表单选项
+ * @param exportOptions 导出选项
+ * @param cellFormatFunction 单元格格式化函数
+ * @returns Promise<void>
+ */
+export async function exportExcel(
+  sheetOptions: SheetOptions[] | SheetOptions,
+  exportOptions: ExportOptions | string,
+  cellFormatFunction: (cell: ExcelJS.Cell) => void,
+): Promise<void> {
+  try {
+    if (typeof window === 'undefined') {
+      console.warn('warn: this function can only be used in the browser environment')
+      return
+    }
+    const workbook = new ExcelJS.Workbook()
+    const sheets = Array.isArray(sheetOptions) ? sheetOptions : [sheetOptions]
+    sheets.forEach(({ data, tableHeader, sheetName }) => {
+      const worksheet = workbook.addWorksheet(sheetName)
+      worksheet.addRow(tableHeader.map(h => h.header))
+      data.forEach((item) => {
+        worksheet.addRow(tableHeader.map(h => item[h.key]))
+      })
+      worksheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          cellFormatFunction(cell)
+        })
+      })
+    })
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob(
+      [buffer],
+      { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+    )
+    saveAs(blob, typeof exportOptions === 'string' ? exportOptions : exportOptions.fileName)
+  }
+  catch (error) {
+    console.error('export excel failed reason:', error)
   }
 }
