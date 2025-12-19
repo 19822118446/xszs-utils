@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generateTimePeriod, isDateAfter, isDateBefore, isDateInRange } from './timeFn'
+import { generateTimePeriod, getDateRange, getDaysBetweenDates, isDateAfter, isDateBefore, isDateInRange, transformDataTo24Or96 } from './timeFn'
 
 describe('generateTimePeriod', () => {
   it('因该返回96个时间点', () => {
@@ -315,5 +315,279 @@ describe('isDateBefore', () => {
   it('handles Date object and string cross-comparison', () => {
     expect(isDateBefore(new Date('2025-01-01'), '2025-01-02')).toBe(true)
     expect(isDateBefore('2025-01-02', new Date('2025-01-03'))).toBe(true)
+  })
+})
+
+describe('getDaysBetweenDates', () => {
+  it('should return the number of days between two dates', () => {
+    expect(getDaysBetweenDates('2025-01-01', '2025-01-02')).toBe(1)
+    expect(getDaysBetweenDates('2025-01-01', '2025-01-10')).toBe(9)
+    expect(getDaysBetweenDates('2025-01-10', '2025-01-01')).toBe(-9)
+    expect(getDaysBetweenDates(new Date('2025-01-01'), new Date('2025-01-02'))).toBe(1)
+    expect(getDaysBetweenDates('2025-01-01T00:00:00', '2025-01-02T00:00:00')).toBe(1)
+    // Same day returns 0
+    expect(getDaysBetweenDates('2025-01-01', '2025-01-01')).toBe(0)
+  })
+
+  it('should support hour unit', () => {
+    expect(getDaysBetweenDates('2025-01-01T00:00:00', '2025-01-01T02:00:00', 'hour')).toBe(2)
+    expect(getDaysBetweenDates('2025-01-01T10:15:00', '2025-01-01T12:45:00', 'hour')).toBe(2)
+    expect(getDaysBetweenDates('2025-01-02T00:00:00', '2025-01-01T00:00:00', 'hour')).toBe(-24)
+    // 字符串类型的测试用例
+    expect(getDaysBetweenDates('2025-01-01 00:00:00', '2025-01-01 05:00:00', 'hour')).toBe(5)
+    expect(getDaysBetweenDates('2025-01-01 22:00:00', '2025-01-02 01:00:00', 'hour')).toBe(3)
+    expect(getDaysBetweenDates('2025/01/01 08:00:00', '2025/01/01 10:30:00', 'hour')).toBe(2)
+    expect(getDaysBetweenDates('2025-01-01T15:00:00', '2025-01-01 18:00:00', 'hour')).toBe(3)
+  })
+
+  it('should support minute unit', () => {
+    expect(getDaysBetweenDates('2025-01-01T00:00:00', '2025-01-01T00:10:00', 'minute')).toBe(10)
+    expect(getDaysBetweenDates('2025-01-01T23:50:00', '2025-01-02T00:00:00', 'minute')).toBe(10)
+    expect(getDaysBetweenDates('2025-01-01T00:10:00', '2025-01-01T00:00:00', 'minute')).toBe(-10)
+    // 字符串类型的测试用例
+    expect(getDaysBetweenDates('2025-01-01 00:00:00', '2025-01-01 00:25:00', 'minute')).toBe(25)
+    expect(getDaysBetweenDates('2025/01/01 12:30:00', '2025/01/01 13:00:00', 'minute')).toBe(30)
+    expect(getDaysBetweenDates('2025-01-01 10:00:00', '2025-01-01T11:05:00', 'minute')).toBe(65)
+  })
+
+  it('should support second unit', () => {
+    expect(getDaysBetweenDates('2025-01-01T00:00:00', '2025-01-01T00:00:05', 'second')).toBe(5)
+    expect(getDaysBetweenDates('2025-01-01T00:00:10', '2025-01-01T00:00:00', 'second')).toBe(-10)
+    // 字符串类型的测试用例
+    expect(getDaysBetweenDates('2025-01-01 00:00:00', '2025-01-01 00:00:30', 'second')).toBe(30)
+    expect(getDaysBetweenDates('2025/01/01 23:59:59', '2025/01/02 00:00:01', 'second')).toBe(2)
+    expect(getDaysBetweenDates('2025-01-01T12:00:00', '2025-01-01 12:00:05', 'second')).toBe(5)
+    expect(getDaysBetweenDates('2025-01-01 08:00:10', '2025-01-01 08:00:00', 'second')).toBe(-10)
+  })
+})
+
+describe('getDateRange', () => {
+  it('should return the range of dates', () => {
+    // 测试空数组
+    expect(getDateRange([])).toEqual([])
+    // 测试单个元素的数组
+    expect(getDateRange(['2025-01-01'])).toEqual(['2025-01-01', '2025-01-01'])
+    // 测试两个元素的数组，顺序正序
+    expect(getDateRange(['2025-01-01', '2025-01-02'])).toEqual(['2025-01-01', '2025-01-02'])
+    // 测试两个元素的数组，顺序倒序
+    expect(getDateRange(['2025-01-02', '2025-01-01'])).toEqual(['2025-01-01', '2025-01-02'])
+    // 测试多个元素的数组
+    expect(getDateRange(['2025-01-05', '2025-01-03', '2025-01-10', '2025-01-01'])).toEqual(['2025-01-01', '2025-01-10'])
+
+    // 测试空 Set
+    expect(getDateRange(new Set())).toEqual([])
+    // 测试单个元素的 Set
+    expect(getDateRange(new Set(['2025-01-01']))).toEqual(['2025-01-01', '2025-01-01'])
+    // 测试两个元素的 Set
+    expect(getDateRange(new Set(['2025-01-01', '2025-01-02']))).toEqual(['2025-01-01', '2025-01-02'])
+    // 测试多个元素的 Set
+    expect(getDateRange(new Set(['2025-01-05', '2025-01-03', '2025-01-10', '2025-01-01']))).toEqual(['2025-01-01', '2025-01-10'])
+
+    // 测试有重复元素的数组和 Set
+    expect(getDateRange(['2025-01-01', '2025-01-01', '2025-01-01'])).toEqual(['2025-01-01', '2025-01-01'])
+    expect(getDateRange(new Set(['2025-01-01', '2025-01-01']))).toEqual(['2025-01-01', '2025-01-01'])
+
+    // 测试不同格式字符串解析
+    expect(getDateRange(['2025-01-01', '2025/01/03', '2024-12-31'])).toEqual(['2024-12-31', '2025/01/03'])
+    expect(getDateRange(new Set(['2024-12-30T12:00:00', '2024-12-31', '2025-01-01']))).toEqual(['2024-12-30T12:00:00', '2025-01-01'])
+  })
+})
+
+describe('transformDataTo24Or96', () => {
+  it('should return the transformed data for 96->24 aggregation, handle extra keys, multiple dates, and 24->24 identity', () => {
+    // 基础 96点转24点
+    const data = [
+      { infoDate: '2021-01-01', infoTime: '00:15', actualLoad: 200 },
+      { infoDate: '2021-01-01', infoTime: '00:30', actualLoad: 300 },
+      { infoDate: '2021-01-01', infoTime: '00:45', actualLoad: 400 },
+      { infoDate: '2021-01-01', infoTime: '01:00', actualLoad: 500 },
+    ]
+    expect(
+      transformDataTo24Or96(data, {
+        dateKeys: 'infoDate',
+        timeKeys: 'infoTime',
+        calcKeys: ['actualLoad'],
+        targetTimePeriodMode: 24,
+      }),
+    ).toEqual([{ infoDate: '2021-01-01', infoTime: '01:00', actualLoad: 1400 }])
+
+    // 增加一个无效段（部分时段缺数据应忽略）
+    const dataWithGap = [
+      { infoDate: '2021-01-01', infoTime: '00:15', actualLoad: 100 },
+      { infoDate: '2021-01-01', infoTime: '01:00', actualLoad: 200 },
+    ]
+    expect(
+      transformDataTo24Or96(dataWithGap, {
+        dateKeys: 'infoDate',
+        timeKeys: 'infoTime',
+        calcKeys: ['actualLoad'],
+        targetTimePeriodMode: 24,
+      }),
+    ).toEqual([{ infoDate: '2021-01-01', infoTime: '01:00', actualLoad: 300 }])
+
+    // 增强：含其他字段，检查其他字段带出逻辑
+    const richData = [
+      { infoDate: '2021-01-02', infoTime: '11:15', value: 1, note: 'a', actualLoad: 10 },
+      { infoDate: '2021-01-02', infoTime: '11:30', value: 2, note: 'a', actualLoad: 10 },
+      { infoDate: '2021-01-02', infoTime: '11:45', value: 3, note: 'a', actualLoad: 30 },
+      { infoDate: '2021-01-02', infoTime: '12:00', value: 4, note: 'a', actualLoad: 20 },
+      { infoDate: '2021-01-02', infoTime: '12:15', value: 9, note: 'b', actualLoad: 9 },
+    ]
+    expect(
+      transformDataTo24Or96(richData, {
+        dateKeys: 'infoDate',
+        timeKeys: 'infoTime',
+        calcKeys: ['actualLoad'],
+        targetTimePeriodMode: 24,
+      }),
+    ).toEqual([
+      {
+        infoDate: '2021-01-02',
+        infoTime: '12:00',
+        actualLoad: 70,
+        value: 1,
+        note: 'a',
+      },
+      {
+        infoDate: '2021-01-02',
+        infoTime: '13:00',
+        actualLoad: 9,
+        value: 9,
+        note: 'b',
+      },
+    ])
+
+    // 多日期混合聚合
+    const multiDate = [
+      { infoDate: '2023-01-01', infoTime: '00:15', actualLoad: 1 },
+      { infoDate: '2023-01-01', infoTime: '00:30', actualLoad: 3 },
+      { infoDate: '2023-01-02', infoTime: '00:15', actualLoad: 7 },
+      { infoDate: '2023-01-02', infoTime: '00:30', actualLoad: 9 },
+      { infoDate: '2023-01-02', infoTime: '00:45', actualLoad: 8 },
+      { infoDate: '2023-01-02', infoTime: '01:00', actualLoad: 10 },
+    ]
+    expect(
+      transformDataTo24Or96(multiDate, {
+        dateKeys: 'infoDate',
+        timeKeys: 'infoTime',
+        calcKeys: ['actualLoad'],
+        targetTimePeriodMode: 24,
+      }),
+    ).toEqual([
+      { infoDate: '2023-01-01', infoTime: '01:00', actualLoad: 4 },
+      { infoDate: '2023-01-02', infoTime: '01:00', actualLoad: 34 },
+    ])
+
+    // 24点转24点为"identity"
+    const pure24h = [
+      { infoDate: '2022-01-01', infoTime: '01:00', actualLoad: 100, other: 't' },
+      { infoDate: '2022-01-01', infoTime: '02:00', actualLoad: 200, other: 't' },
+    ]
+    expect(
+      transformDataTo24Or96(pure24h, {
+        dateKeys: 'infoDate',
+        timeKeys: 'infoTime',
+        calcKeys: ['actualLoad'],
+        targetTimePeriodMode: 24,
+      }),
+    ).toEqual([
+      { infoDate: '2022-01-01', infoTime: '01:00', actualLoad: 100, other: 't' },
+      { infoDate: '2022-01-01', infoTime: '02:00', actualLoad: 200, other: 't' },
+    ])
+  })
+
+  it('should support 24->96 splitting: split 24 point data into 96 point data', () => {
+    // 24点转96点：将每个24点数据拆分成4个96点数据，每个96点数据的值为原值的1/4
+    const data24 = [
+      { infoDate: '2024-05-01', infoTime: '01:00', actualLoad: 400 },
+      { infoDate: '2024-05-01', infoTime: '02:00', actualLoad: 800 },
+    ]
+    const result = transformDataTo24Or96(data24, {
+      dateKeys: 'infoDate',
+      timeKeys: 'infoTime',
+      calcKeys: ['actualLoad'],
+      targetTimePeriodMode: 96,
+    })
+    expect(result).toEqual([
+      { infoDate: '2024-05-01', infoTime: '00:15', actualLoad: 100 },
+      { infoDate: '2024-05-01', infoTime: '00:30', actualLoad: 100 },
+      { infoDate: '2024-05-01', infoTime: '00:45', actualLoad: 100 },
+      { infoDate: '2024-05-01', infoTime: '01:00', actualLoad: 100 },
+      { infoDate: '2024-05-01', infoTime: '01:15', actualLoad: 200 },
+      { infoDate: '2024-05-01', infoTime: '01:30', actualLoad: 200 },
+      { infoDate: '2024-05-01', infoTime: '01:45', actualLoad: 200 },
+      { infoDate: '2024-05-01', infoTime: '02:00', actualLoad: 200 },
+    ])
+
+    // 测试包含其他字段的情况
+    const data24WithExtra = [
+      { infoDate: '2024-06-01', infoTime: '01:00', actualLoad: 200, value: 10, note: 'test' },
+      { infoDate: '2024-06-01', infoTime: '02:00', actualLoad: 400, value: 20, note: 'test2' },
+    ]
+    const resultWithExtra = transformDataTo24Or96(data24WithExtra, {
+      dateKeys: 'infoDate',
+      timeKeys: 'infoTime',
+      calcKeys: ['actualLoad'],
+      targetTimePeriodMode: 96,
+    })
+    expect(resultWithExtra).toEqual([
+      { infoDate: '2024-06-01', infoTime: '00:15', actualLoad: 50, value: 10, note: 'test' },
+      { infoDate: '2024-06-01', infoTime: '00:30', actualLoad: 50, value: 10, note: 'test' },
+      { infoDate: '2024-06-01', infoTime: '00:45', actualLoad: 50, value: 10, note: 'test' },
+      { infoDate: '2024-06-01', infoTime: '01:00', actualLoad: 50, value: 10, note: 'test' },
+      { infoDate: '2024-06-01', infoTime: '01:15', actualLoad: 100, value: 20, note: 'test2' },
+      { infoDate: '2024-06-01', infoTime: '01:30', actualLoad: 100, value: 20, note: 'test2' },
+      { infoDate: '2024-06-01', infoTime: '01:45', actualLoad: 100, value: 20, note: 'test2' },
+      { infoDate: '2024-06-01', infoTime: '02:00', actualLoad: 100, value: 20, note: 'test2' },
+    ])
+
+    // 测试多日期的情况
+    const multiDate24 = [
+      { infoDate: '2024-07-01', infoTime: '01:00', actualLoad: 100 },
+      { infoDate: '2024-07-02', infoTime: '01:00', actualLoad: 200 },
+    ]
+    const multiDateResult = transformDataTo24Or96(multiDate24, {
+      dateKeys: 'infoDate',
+      timeKeys: 'infoTime',
+      calcKeys: ['actualLoad'],
+      targetTimePeriodMode: 96,
+    })
+    expect(multiDateResult).toEqual([
+      { infoDate: '2024-07-01', infoTime: '00:15', actualLoad: 25 },
+      { infoDate: '2024-07-01', infoTime: '00:30', actualLoad: 25 },
+      { infoDate: '2024-07-01', infoTime: '00:45', actualLoad: 25 },
+      { infoDate: '2024-07-01', infoTime: '01:00', actualLoad: 25 },
+      { infoDate: '2024-07-02', infoTime: '00:15', actualLoad: 50 },
+      { infoDate: '2024-07-02', infoTime: '00:30', actualLoad: 50 },
+      { infoDate: '2024-07-02', infoTime: '00:45', actualLoad: 50 },
+      { infoDate: '2024-07-02', infoTime: '01:00', actualLoad: 50 },
+    ])
+  })
+
+  it('should support 24->96 splitting: just copy through if already 96 point granularity', () => {
+    // 切分成96点时，原本就是96点则不聚合，直接返回
+    const already96 = [
+      { infoDate: '2024-05-01', infoTime: '00:15', actualLoad: 1 },
+      { infoDate: '2024-05-01', infoTime: '00:30', actualLoad: 2 },
+    ]
+    expect(
+      transformDataTo24Or96(already96, {
+        dateKeys: 'infoDate',
+        timeKeys: 'infoTime',
+        calcKeys: ['actualLoad'],
+        targetTimePeriodMode: 96,
+      }),
+    ).toEqual(already96)
+  })
+
+  it('should process empty input', () => {
+    expect(
+      transformDataTo24Or96([], {
+        dateKeys: 'infoDate',
+        timeKeys: 'infoTime',
+        calcKeys: ['actualLoad'],
+        targetTimePeriodMode: 24,
+      }),
+    ).toEqual([])
   })
 })

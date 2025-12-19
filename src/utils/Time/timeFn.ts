@@ -1,3 +1,5 @@
+import Decimal from 'decimal.js'
+import { unique } from '../Array/arrayFn'
 import { groupBy } from '../Data/data'
 import { getArrayTotal } from '../Math/math'
 
@@ -121,4 +123,177 @@ export function isDateBefore(date: string | Date, compareDate: string | Date): b
   const dateObj = new Date(date)
   const compareDateObj = new Date(compareDate)
   return dateObj < compareDateObj
+}
+
+type TimeUnit = 'day' | 'hour' | 'minute' | 'second'
+/**
+ * 获取两个日期之间的天数或小时或分钟或秒
+ * @param date1 日期1
+ * @param date2 日期2
+ * @param unit 单位，'day' | 'hour' | 'minute' | 'second'
+ * @returns 天数或小时或分钟或秒
+ */
+export function getDaysBetweenDates(date1: string | Date, date2: string | Date, unit: TimeUnit = 'day'): number {
+  let timeDiff = 0
+  switch (unit) {
+    case 'day':
+      timeDiff = 1000 * 60 * 60 * 24
+      break
+    case 'hour':
+      timeDiff = 1000 * 60 * 60
+      break
+    case 'minute':
+      timeDiff = 1000 * 60
+      break
+    case 'second':
+      timeDiff = 1000
+      break
+  }
+  const date1Obj = new Date(date1)
+  const date2Obj = new Date(date2)
+  return Math.floor((date2Obj.getTime() - date1Obj.getTime()) / timeDiff)
+}
+
+/**
+ * 获取日期范围中的最小日期和最大日期
+ * @param dateList 日期列表
+ * @returns [最小日期,最大日期]
+ */
+export function getDateRange(dateList: string[] | Set<string> = []): [string, string] | [] {
+  if (dateList instanceof Set) {
+    if (dateList.size === 0)
+      return []
+    else if (dateList.size === 1)
+      return [Array.from(dateList).at(0)!, Array.from(dateList).at(0)!]
+    return [
+      Array.from(dateList).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0]!,
+      Array.from(dateList)
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+        .at(-1)!,
+    ]
+  }
+  else if (Array.isArray(dateList)) {
+    if (dateList.length === 0)
+      return []
+    else if (dateList.length === 1)
+      return [dateList.at(0)!, dateList.at(0)!]
+    return [dateList.sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0]!, dateList.sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).at(-1)!]
+  }
+  return []
+}
+
+/**
+ * @param data 原始数据 @type 必须含有infoDate和infoTime的键
+ * @param calcKeys 需要计算的键 @type 必须含有infoDate和infoTime的键 @values string[]
+ * @param timePeriodMode 需要转换的目标时间点数 @values TwentyFourTimeHour | NinetySixTimeHour
+ * @returns @type T[] 转换后的24点或96点数据
+ * @description 根据时间模式转换数据为24点或96点数据 (最好在使用前判断一下 是否需要使用转换函数 比如 24 ---> 24 的情况下 不要调用这个函数)
+ * @warning 注意如果你是96点数据 但是会有某个时段内比如00:35没有数据 那么这个函数会自动跳过这个时段 不会计算这个时段的即 这个时段的数据总值除以 **有效个数** 的平均值
+ * @example
+ * const data = [
+ *   { infoDate: '2021-01-01', infoTime: '00:15', actualLoad: 200 },
+ *   { infoDate: '2021-01-01', infoTime: '00:30', actualLoad: 300 },
+ *   { infoDate: '2021-01-01', infoTime: '00:45', actualLoad: 400 },
+ *   { infoDate: '2021-01-01', infoTime: '01:00', actualLoad: 500 },
+ * ];
+ * const transFormData = transformDataTo24Or96(data, ['actualLoad'], TimePeriodMode.TwentyFourTimeHour);
+ * console.log(transFormData); // [{ infoDate: '2021-01-01', infoTime: '01:00', actualLoad: 1400 }];
+ */
+
+const TIME_MAP = new Map(
+  Array.from({ length: 24 }, (_, i) => [
+    `${i === 23 ? '24' : (i + 1).toString().padStart(2, '0')}:00`,
+    Array.from({ length: 4 }, (_, j) => {
+      const totalMinutes = i * 60 + (j + 1) * 15
+      const h = totalMinutes < 1440 ? Math.floor(totalMinutes / 60) : 24
+      const m = totalMinutes % 60
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+    }),
+  ]),
+)
+export enum TimePeriodMode {
+  TwentyFourTimeHour = 24,
+  NinetySixTimeHour = 96,
+}
+export type ExcludeKeys<T> = keyof T
+export function transformDataTo24Or96<T extends Record<string, any>>(
+  originData: T[],
+  options: {
+    dateKeys: keyof T
+    timeKeys: keyof T
+    calcKeys: (keyof T)[]
+    targetTimePeriodMode: TimePeriodMode
+  },
+): T[] {
+  const { dateKeys, timeKeys, calcKeys, targetTimePeriodMode } = options
+  if (originData.length === 0)
+    return []
+  // 获取所有键，排除需要计算的键和基础键
+  const allKeys = Object.keys(originData[0]) as (keyof T)[]
+  const oriDataMode = originData.some(item => /^.+:(?:15|30|45)$/.test(item[timeKeys]))
+    ? TimePeriodMode.NinetySixTimeHour
+    : TimePeriodMode.TwentyFourTimeHour
+  if (oriDataMode === targetTimePeriodMode)
+    return originData // 如果原始数据模式和目标模式相同，则直接返回原始数据
+  const excludeKeys = allKeys.filter(key => key !== dateKeys && key !== timeKeys && !calcKeys.includes(key as keyof Omit<T, ExcludeKeys<T>>))
+  // 构建时间集合用于快速查找（96点模式使用）
+  const oriInfoTimeSet = new Set(originData.map(item => `${item[dateKeys]} ${item[timeKeys]}`))
+  // 按日期分组数据，提升查找性能
+  const dataByDate = new Map<string, T[]>()
+  originData.forEach((item) => {
+    const date = item[dateKeys]
+    if (!dataByDate.has(date)) {
+      dataByDate.set(date, [])
+    }
+    dataByDate.get(date)!.push(item)
+  })
+
+  const dateSetArr = unique(originData.map(item => item[dateKeys]))
+  const newData: T[] = []
+  const timeArray = targetTimePeriodMode === TimePeriodMode.TwentyFourTimeHour ? generateTimePeriod(24, 'end') : generateTimePeriod(96, 'end')
+  const useFixedDivisor = targetTimePeriodMode === TimePeriodMode.NinetySixTimeHour
+  dateSetArr.forEach((date) => {
+    const dateData = dataByDate.get(date) || []
+    timeArray.forEach((time) => {
+      // 96点模式需要检查时间是否存在
+      const targetTime = useFixedDivisor ? roundUpToHour(time) : time
+      const timeKey = `${date} ${targetTime}`
+      if (useFixedDivisor && !oriInfoTimeSet.has(timeKey)) {
+        return
+      }
+      // 过滤匹配时间的数据
+      const timeMapValues = TIME_MAP.get(targetTime)
+      if (!timeMapValues)
+        return
+      const matchedData = dateData.filter(item => timeMapValues.includes(item[timeKeys]))
+      if (matchedData.length === 0)
+        return
+      // 创建新对象
+      const obj = {
+        [dateKeys]: date,
+        [timeKeys]: time,
+      } as T
+      // 计算需要计算的键的平均值
+      calcKeys.forEach((key) => {
+        const values = matchedData.map(item => item[key]).filter(v => v !== undefined && v !== null)
+        if (values.length === 0) {
+          (obj as any)[key] = null
+        }
+        else {
+          // 24转96点：除以4；96转24点：直接加和
+          const divisor = useFixedDivisor ? 4 : 1;
+          (obj as any)[key] = values
+            .reduce((sum, curr) => sum.add(new Decimal(curr)), new Decimal(0))
+            .div(divisor)
+            .toNumber()
+        }
+      })
+      const firstMatchedItem = matchedData[0]
+      excludeKeys.forEach((key) => {
+        obj[key] = (firstMatchedItem[key] ?? null) as T[keyof T]
+      })
+      newData.push(obj)
+    })
+  })
+  return newData
 }
