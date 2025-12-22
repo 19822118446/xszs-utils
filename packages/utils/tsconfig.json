@@ -23,5 +23,12 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "commitlint.config.mjs"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
 }

@@ -214,13 +214,6 @@ interface ExcelMartNumberPlugin {
   }
 }
 
-// 导出Excel插件 合并单元格
-// export type ExportExcelPlugin = {
-//   name: 'autoMergeCell' | 'autoBestWidth' | 'excelMartNumber'
-//   options?: {
-//     maxThreshold?: number
-//   }
-// }
 /**
  * 导出Excel
  * @param sheetOptions 表单选项
@@ -231,7 +224,7 @@ interface ExcelMartNumberPlugin {
 export async function exportExcel(
   sheetOptions: SheetOptions[] | SheetOptions,
   exportOptions: ExportOptions | string,
-  cellFormatFunction: (cell: ExcelJS.Cell) => void,
+  cellFormatFunction?: (cell: ExcelJS.Cell) => void,
 ): Promise<void> {
   try {
     if (typeof window === 'undefined') {
@@ -249,7 +242,7 @@ export async function exportExcel(
       })
       worksheet.eachRow((row) => {
         row.eachCell((cell) => {
-          cellFormatFunction(cell)
+          cellFormatFunction?.(cell)
         })
       })
       plugins?.forEach((plugin) => {

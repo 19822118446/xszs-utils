@@ -48,6 +48,7 @@
     "@vitest/ui": "catalog:utils",
     "eslint": "catalog:utils",
     "typescript": "catalog:utils",
+    "vite": "catalog:utils",
     "vite-plugin-dts": "catalog:utils",
     "vitest": "catalog:utils"
   }

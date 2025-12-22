@@ -142,12 +142,6 @@ export default defineConfig({
     VueDevTools(),
   ],
 
-  // https://github.com/vitest-dev/vitest
-  test: {
-    include: ['test/**/*.test.ts'],
-    environment: 'jsdom',
-  },
-
   // https://github.com/antfu/vite-ssg
   ssgOptions: {
     script: 'async',
