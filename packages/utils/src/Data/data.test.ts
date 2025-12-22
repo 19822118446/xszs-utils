@@ -1,6 +1,6 @@
 /* eslint-disable test/no-identical-title */
 import { describe, expect, it } from 'vitest'
-import { clearEmptyFields, dfsTreeSort, findNodeInTree, flatToTreeRecursive, getSettledDataArray, isCouldBeCalcNumType, isEmptyObject, isWhatType, modifyKeyNameForRecordList } from './data'
+import { clearEmptyFields, dfsTreeSort, filterObjectNeedFields, findAllNodeInTree, findNodeInTree, flatToTreeRecursive, getSettledDataArray, isCouldBeCalcNumType, isEmptyObject, isWhatType, modifyKeyNameForRecordList } from './data'
 
 const testArr = [
   {
@@ -27,6 +27,24 @@ describe('flatToTreeRecursive', () => {
     expect(flatToTreeRecursive(testArr, { idKey: 'id', parentIdKey: 'parentId', childrenKey: 'children222' })).toEqual([
       { id: 1, parentId: null, children222: [{ id: 2, parentId: 1, children222: [{ id: 3, parentId: 2 }] }] },
     ])
+  })
+})
+
+
+
+describe('filterObjectNeedFields', () => {
+  it('英爱筛掉不需要的字段', () => {
+    expect(filterObjectNeedFields({
+      name: 'Joe',
+      age: 18,
+      say: true
+    }, ['say'])).toMatchInlineSnapshot(`
+      {
+        "age": 18,
+        "name": "Joe",
+      }
+    `)
+
   })
 })
 
@@ -93,6 +111,31 @@ describe('findNodeInTree', () => {
   })
 })
 
+describe('findNodeInTree', () => {
+  const tree = [
+    {
+      id: 3,
+      parentId: null,
+      children: [{ id: 2, parentId: 1, children: [{ id: 3, parentId: 2 }] }],
+    },
+  ]
+  it('查找全部节点', () => {
+    expect(findAllNodeInTree(tree, 3)).toMatchInlineSnapshot(`
+      [
+        {
+          "id": 3,
+          "parentId": null,
+        },
+        {
+          "id": 3,
+          "parentId": 2,
+        },
+      ]
+    `)
+  })
+})
+
+
 describe('dfsTreeSort', () => {
   it('排序树结构', () => {
     const tree = [
@@ -112,10 +155,12 @@ describe('dfsTreeSort', () => {
     ]
     expect(dfsTreeSort(tree, { sortKey: 'id', direction: 'descending' })).toEqual([
       { id: 4, parentId: null },
-      { id: 1, parentId: null, children: [
-        { id: 3, parentId: 1 },
-        { id: 2, parentId: 2 },
-      ] },
+      {
+        id: 1, parentId: null, children: [
+          { id: 3, parentId: 1 },
+          { id: 2, parentId: 2 },
+        ]
+      },
 
     ])
   })

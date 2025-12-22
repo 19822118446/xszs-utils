@@ -48,7 +48,7 @@ export function flatToTreeRecursive<T extends Record<string, any>>(
  * @param id 节点ID
  * @returns 节点
  */
-export function findNodeInTree<T extends Record<string, any>>(tree: T[], findId: string | number, idKey: string | number = 'id', childrenKey: string = 'children'): T | null {
+export function findNodeInTree<T extends Record<any, any>>(tree: T[], findId: string | number, idKey: string | number = 'id', childrenKey: string = 'children'): T | null {
   for (const node of tree) {
     if (node[idKey] === findId)
       return node
@@ -60,6 +60,24 @@ export function findNodeInTree<T extends Record<string, any>>(tree: T[], findId:
     }
   }
   return null
+}
+
+
+export function findAllNodeInTree<T extends Record<any, any>>(tree: T[], findId: string | number, idKey: string | number = 'id', childrenKey: string = 'children'){
+  const resultTreeList: T[] = [];
+  for (const node of tree) {
+    if (node[idKey] === findId) {
+      resultTreeList.push(filterObjectNeedFields(node,['children']))
+    }
+    const children = node[childrenKey]
+    if (children) {
+      const result = findNodeInTree(children, findId, idKey, childrenKey)
+      if (result) {
+        resultTreeList.push(result)
+      }
+    }
+  }
+  return resultTreeList
 }
 
 /**
@@ -100,6 +118,24 @@ export function dfsTreeSort<T extends Record<string, any>>(tree: T[], options?: 
     })
 }
 
+
+/**
+ * 
+ * @param obj 原始对象
+ * @param excludeKeys 需要去除掉的对象字段
+ * @description 传入你想筛掉的属性保留该对象剩余属性
+ * 
+*/
+
+export function filterObjectNeedFields<T extends Record<any, any>>(obj: T, excludeKeys: (keyof T)[]) {
+  const newObj: Record<any, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (!excludeKeys.includes(key)) {
+      newObj[key] = value;
+    }
+  }
+  return newObj
+}
 /**
  * @param data 数据
  * @returns 清除空字段后的数据
