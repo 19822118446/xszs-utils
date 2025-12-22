@@ -39,7 +39,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build VitePress
-        run: pnpm docs:build
+        run: pnpm doc:build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
