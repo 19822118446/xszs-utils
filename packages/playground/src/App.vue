@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { TIMEARRAY_24_END} from "@xszs/utils";
+import { sleep } from '@xszs/utils'
 
-console.log(TIMEARRAY_24_END);
+
+await sleep(3)
+console.log(109);
+
+
 </script>
 
 <template>
@@ -23,9 +27,11 @@ console.log(TIMEARRAY_24_END);
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
 }

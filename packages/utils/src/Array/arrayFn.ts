@@ -69,7 +69,7 @@ export function unique<T = any>(arr: T[]): T[] {
  * getArrayMax([1, 2, 3, 4, 5]) // 5
  */
 
-export function getArrayMax(arr: number[]): number | undefined {
+export function max(arr: number[]): number | undefined {
   if (arr.length === 0)
     return undefined
   let max = arr[0]
@@ -88,7 +88,7 @@ export function getArrayMax(arr: number[]): number | undefined {
  * @example
  * getArrayMin([1, 2, 3, 4, 5]) // 1
  */
-export function getArrayMin(arr: number[]): number | undefined {
+export function min(arr: number[]): number | undefined {
   if (arr.length === 0)
     return undefined
   let min = arr[0]
@@ -99,3 +99,5 @@ export function getArrayMin(arr: number[]): number | undefined {
   }
   return min
 }
+
+

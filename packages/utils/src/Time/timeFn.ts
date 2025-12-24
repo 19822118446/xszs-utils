@@ -298,3 +298,12 @@ export function transformDataTo24Or96<T extends Record<string, any>>(
   })
   return newData
 }
+
+
+export async function sleep(time: number) {
+  return await new Promise<void>(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, time * 1000)
+  })
+}

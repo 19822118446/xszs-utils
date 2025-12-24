@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generateTimePeriod, getDateRange, getDaysBetweenDates, isDateAfter, isDateBefore, isDateInRange, transformDataTo24Or96 } from './timeFn'
+import { generateTimePeriod, getDateRange, getDaysBetweenDates,sleep, isDateAfter, isDateBefore, isDateInRange, transformDataTo24Or96 } from './timeFn'
 
 describe('generateTimePeriod', () => {
   it('因该返回96个时间点', () => {
@@ -591,3 +591,6 @@ describe('transformDataTo24Or96', () => {
     ).toEqual([])
   })
 })
+
+
+
